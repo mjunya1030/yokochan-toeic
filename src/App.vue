@@ -1,6 +1,10 @@
 <template>
   <div id="app">
-    <img src="./assets/logo.png">
+    <v-img
+      :src="require('@/assets/logo.png')"
+      height=40
+      contain
+    ></v-img>
     <router-view/>
   </div>
 </template>

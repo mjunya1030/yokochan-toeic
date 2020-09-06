@@ -1,7 +1,18 @@
 <template>
   <div class="hello">
-    <h1>{{ question_no }}</h1>
-    <h1>{{ questions.question_no }}</h1>
+    <v-list two-line>
+      <template v-for="question in questions">
+        <v-list-item
+          :key="question.question_no"
+          @click="">
+          <v-list-item-content>
+            <v-list-item-title v-text="question.question_no"></v-list-item-title>
+            <v-list-item-subtitle v-text="question.question_text"></v-list-item-subtitle>
+          </v-list-item-content>
+        </v-list-item>
+      </template>
+    </v-list>
+
   </div>
 </template>
 
@@ -11,21 +22,21 @@ export default {
   name: 'HelloWorld',
   data () {
     return {
-      msg: 'Welcome to Your Vue.js App',
       question_no: '',
-      questions: {}
+      questions: []
     }
   },
   created() {
 
 
-    let questions = firestore.collection('questions');
+    const questions = firestore.collection('questions');
 
-    let setQuestion = questions.get()
+    questions.get()
       .then((snapshot) => {
         snapshot.forEach((doc) => {
+          console.log(doc.data())
           this.question_no = (doc.id, '=>', doc.data().question_no)
-          this.questions = (doc.id, '=>', doc.data())
+          this.questions.push(doc.data())
         });
       })
       .catch((err) => {

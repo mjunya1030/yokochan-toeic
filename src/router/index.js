@@ -11,5 +11,6 @@ export default new Router({
       name: 'ListQuestion',
       component: ListQuestion
     }
-  ]
+  ],
+  mode: 'history'
 })
