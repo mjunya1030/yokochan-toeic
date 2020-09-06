@@ -84,12 +84,40 @@
 </template>
 
 <script>
+import firestore from '@/firebase/firestore'
 export default {
   name: 'HelloWorld',
   data () {
     return {
       msg: 'Welcome to Your Vue.js App'
     }
+  },
+  created() {
+
+
+    let questions = firestore.collection('questions');
+
+    let setQuestion = questions.get()
+      .then((snapshot) => {
+        snapshot.forEach((doc) => {
+          console.log(doc.id, '=>', doc.data());
+        });
+      })
+      .catch((err) => {
+        console.log('Error getting documents', err);
+      });
+
+
+
+    // firestore.collection('questions').get()
+    //   .then((snapshot) => {
+    //     snapshot.forEach((doc) => {
+    //       console.log(doc.id, '=>', doc.data());
+    //     });
+    //   })
+    //   .catch((err) => {
+    //     console.log('Error getting documents', err);
+    //   });
   }
 }
 </script>
