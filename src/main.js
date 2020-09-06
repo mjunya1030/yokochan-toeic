@@ -3,18 +3,6 @@
 import Vue from 'vue'
 import App from './App'
 import router from './router'
-import firebase from 'firebase'
-
-const config = {
-  apiKey: "FIREBASE_KEY",
-  // authDomain: "{.....}",
-  // databaseURL: "{.....}",
-  projectId: "PROJECT_ID",
-  // storageBucket: "{.....}",
-  // messagingSenderId: "{.....}"
-}
-
-firebase.initializeApp(config)
 
 Vue.config.productionTip = false
 
