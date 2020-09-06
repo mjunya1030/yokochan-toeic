@@ -27,7 +27,7 @@ jobs:
         run: echo Start Deploy
       
       # set up Node
-        - name: setup Node
+      - name: setup Node
         uses: actions/setup-node@v1
         with:
         node-version: 10.x
