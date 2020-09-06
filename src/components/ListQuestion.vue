@@ -4,14 +4,16 @@
       <template v-for="question in questions">
         <v-list-item
           :key="question.question_no"
-          @click="">
+          @click.stop="">
           <v-list-item-content>
-            <v-list-item-title v-text="question.question_no"></v-list-item-title>
+            <v-list-item-title align="start" v-text="question.question_no"></v-list-item-title>
             <v-list-item-subtitle v-text="question.question_text"></v-list-item-subtitle>
           </v-list-item-content>
         </v-list-item>
+        <v-divider></v-divider>
       </template>
     </v-list>
+    <v-btn color="#CE3772" dark depressed rounded>採点する</v-btn>
 
   </div>
 </template>
