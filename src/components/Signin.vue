@@ -7,7 +7,6 @@
       @click="signIn"
       color="#CE3772"
       style="color:white;"
-      dark
       depressed 
       rounded
       :loading="loading"
