@@ -13,10 +13,7 @@
         <v-divider></v-divider>
       </template>
     </v-list>
-    <v-btn color="#CE3772" dark depressed rounded>採点してみる！</v-btn>
-    <br/>
-    <br/>
-    <button @click="signOut">ログアウト</button>
+    <v-btn color="#CE3772" dark depressed rounded>採点する</v-btn>
   </div>
 </template>
 
