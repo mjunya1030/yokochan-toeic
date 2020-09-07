@@ -13,7 +13,7 @@
         <v-divider></v-divider>
       </template>
     </v-list>
-    <v-btn color="#CE3772" dark depressed rounded>採点する！</v-btn>
+    <v-btn color="#CE3772" dark depressed rounded>採点してみる！</v-btn>
 
   </div>
 </template>
