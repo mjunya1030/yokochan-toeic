@@ -14,12 +14,13 @@
       </template>
     </v-list>
     <v-btn color="#CE3772" dark depressed rounded>採点する</v-btn>
-
   </div>
 </template>
 
 <script>
 import firestore from '@/firebase/firestore'
+import firebase from 'firebase'
+
 export default {
   name: 'HelloWorld',
   data () {
@@ -28,15 +29,18 @@ export default {
       questions: []
     }
   },
+  methods: {
+    signOut: function () {
+      firebase.auth().signOut().then(() => {
+        this.$router.push('/signin')
+      })
+    }
+  },
   created() {
-
-
     const questions = firestore.collection('questions');
-
     questions.get()
       .then((snapshot) => {
         snapshot.forEach((doc) => {
-          console.log(doc.data())
           this.question_no = (doc.id, '=>', doc.data().question_no)
           this.questions.push(doc.data())
         });
