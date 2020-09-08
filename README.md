@@ -5,6 +5,9 @@
 ## Build Setup
 
 ``` bash
+# change dir to this repo.
+cd ~/git/yokochan-toeic
+
 # install dependencies
 npm install
 
