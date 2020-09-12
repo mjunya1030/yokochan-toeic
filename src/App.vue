@@ -1,12 +1,14 @@
 <template>
-  <div id="app">
-    <v-img
-      :src="require('@/assets/logo.png')"
-      height=40
-      contain
-    ></v-img>
+  <v-app id="app">
+    <div class="header">
+      <v-img
+        :src="require('@/assets/logo.png')"
+        height="50"
+        contain
+      ></v-img>
+    </div>
     <router-view/>
-  </div>
+  </v-app>
 </template>
 
 <script>
@@ -28,4 +30,8 @@ export default {
 .v-application {
    font-family: "M Plus 1p" !important;
  }
+
+.header {
+  height: 50px;
+}
 </style>
