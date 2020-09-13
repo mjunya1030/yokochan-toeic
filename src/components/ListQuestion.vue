@@ -4,12 +4,12 @@
     <p align="center" >TOEICの問題に挑戦してみよう！</p>
     <!-- ここから一覧 -->
     <v-list two-line>
-      <!-- v-for　とかくと、questionsの数だけ、繰り返してくれる。 -->
+      <!-- v-for とかくと、questionsの数だけ、繰り返してくれる。 -->
       <template v-for="question in questions">
         <!-- 問題の数だけ、問題を表示するのを繰り返す keyは気にしなくてok。-->
         <v-list-item
           :key="question.question_no" 
-          @click="showquiz(question.question_no, question.question_text, question.choices)">
+          @click="showquiz(question)">
           <v-list-item-content>
             <!-- ここが数字 ちな、align=startは、文字列を左寄せしてねっていう意味。-->
             <v-list-item-title align="center" v-text="question.question_no"></v-list-item-title>
@@ -32,7 +32,7 @@
 
 
     <!-- ここから答えを出してみよう！ -->
-    <v-simple-table　v-show="isCompleted">
+    <v-simple-table v-show="isCompleted">
       <template>
         <thead>
           <tr>
@@ -58,13 +58,13 @@
       max-width="290"
     >
       <v-card>
-        <v-card-title class="headline" align="start">{{number}}</v-card-title>
-        <v-card-text class="text-left">{{text}}</v-card-text>
+        <v-card-title class="headline" align="start">{{showing_question.question_no}}</v-card-title>
+        <v-card-text class="text-left">{{showing_question.question_text}}</v-card-text>
         <v-radio-group v-model="radios" :mandatory="false" class="ma-3">
-          <v-radio :label="choices.a" :value="choices.a"></v-radio>
-          <v-radio :label="choices.b" :value="choices.b"></v-radio>
-          <v-radio :label="choices.c" :value="choices.c"></v-radio>
-          <v-radio :label="choices.d" :value="choices.d"></v-radio>
+          <v-radio :label="showing_question.choices.a" :value="showing_question.choices.a"></v-radio>
+          <v-radio :label="showing_question.choices.b" :value="showing_question.choices.b"></v-radio>
+          <v-radio :label="showing_question.choices.c" :value="showing_question.choices.c"></v-radio>
+          <v-radio :label="showing_question.choices.d" :value="showing_question.choices.d"></v-radio>
         </v-radio-group>
         <v-card-actions>
           <v-spacer></v-spacer>
@@ -78,7 +78,7 @@
           <v-btn
             color="green darken-1"
             text
-            @click="answer(number, radios)"
+            @click="answer(showing_question, radios)"
           >
             回答する
           </v-btn>
@@ -94,17 +94,29 @@ import firebase from 'firebase'
 
 export default {
   name: 'HelloWorld',
-  data () {
+  data() {
     return {
       questions: [],
       dialog: false,
       isQuiz: false,
-      number: 101,
-      text: "なんでもいいよ",
-      choices:"選択肢",
       radios: '',
       isCompleted: false,
-      usersChoice: {}
+      usersChoice: {},
+      showing_question: {
+        choices: {
+          a: '',
+          b: '',
+          c: '',
+          d: '',
+        }
+      },
+
+      // ユーザー情報系
+      name:'',
+      email:'',
+      photoUrl:'',
+      emailVerified:'',
+      uid:'',
     }
   },
   methods: {
@@ -113,27 +125,49 @@ export default {
         this.$router.push('/signin')
       })
     }
-    ,showquiz(questionNo, questionText,questionChoices) {
+    ,showquiz(question) {
       this.radios = ''
       this.isQuiz = true;
-      this.number = questionNo; //this.number = 120;
-      this.text = questionText; //this.text = 的s; 
-      this.choices = questionChoices; //this.choices=問題;
+      this.showing_question = question
+      console.log(this.showing_question.choices.a)
+      
     },
-    answer(number, choice){
+    answer(question, radio){
       this.isQuiz = false
-      this.usersChoice[number] = choice
-      console.log(this.usersChoice)
+      this.usersChoice[question.question_no] = radio
+
+      // firestoreにデータ書き込み
+      const data = {
+        doc_id: question.doc_id,
+        question_no: question.question_no,
+        question_text: question.question_text,
+        choices: question.choices,
+        answer: question.answer,
+        user_choice: radio,
+        result: radio==question.answer,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+      };
+      firestore.collection('users').doc(this.uid).collection('userAnswers').add(data)
+      
     }
 
   },
   created() {
+    const user = firebase.auth().currentUser;
+    if (user != null) {
+      this.name = user.displayName;
+      this.email = user.email;
+      this.photoUrl = user.photoURL;
+      this.emailVerified = user.emailVerified;
+      this.uid = user.uid;
+    }
     const questions = firestore.collection('questions').orderBy('question_no');
     questions.get()
       .then((snapshot) => {
         snapshot.forEach((doc) => {
-          this.questions.push(doc.data())
-          console.log(this.questions)
+          var data = doc.data()
+          data.doc_id = doc.id;
+          this.questions.push(data)
         });
       })
       .catch((err) => {
