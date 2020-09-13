@@ -26,7 +26,7 @@ export default {
   methods: {
   },
   created() {
-    const users = firestore.collection('users');
+    const users = firestore.collection('users').orderBy('updated','desc');
     users.get()
       .then((snapshot) => {
         snapshot.forEach((doc) => {
