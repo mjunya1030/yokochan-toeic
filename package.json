@@ -11,7 +11,7 @@
     "e2e": "node test/e2e/runner.js",
     "test": "npm run unit && npm run e2e",
     "build": "node build/build.js",
-    "deploy": "firebase deploy"
+    "deploy": "firebase deploy --only hosting"
   },
   "dependencies": {
     "eslint": "^7.9.0",
