@@ -1,34 +1,36 @@
 <template>
   <div class="hello">
-
-    <p align="center" >TOEICの問題に挑戦してみよう！</p>
-    <!-- ここから一覧 -->
-    <v-list two-line>
-      <!-- v-for とかくと、questionsの数だけ、繰り返してくれる。 -->
-      <template v-for="question in questions">
-        <!-- 問題の数だけ、問題を表示するのを繰り返す keyは気にしなくてok。-->
-        <v-list-item
-          :key="question.question_no" 
-          @click="showquiz(question)">
-          <v-list-item-content>
-            <!-- ここが数字 ちな、align=startは、文字列を左寄せしてねっていう意味。-->
-            <v-list-item-title align="center" v-text="question.question_no"></v-list-item-title>
-          </v-list-item-content>
-        </v-list-item>
-        <v-divider></v-divider>
-      </template>
-    </v-list>
-    <!-- ここで一覧終わり -->
-    <v-btn
-      color="#CE3772"
-      dark
-      depressed
-      rounded
-      @click="isCompleted = true"
-    > 
-    
+    <div v-show="questions.length==0&&isLoading==false">この人が作った問題はまだないようです…。</div>
+    <div v-if="questions.length!=0">
+      <p class="text-center">問題に挑戦してみよう！</p>
+      <!-- ここから一覧 -->
+      <v-list two-line>
+        <!-- v-for とかくと、questionsの数だけ、繰り返してくれる。 -->
+        
+        <template v-for="(question, key) in questions">
+          <!-- 問題の数だけ、問題を表示するのを繰り返す keyは気にしなくてok。-->
+          <v-list-item
+            :key="`first-${key}`"
+            @click="showquiz(question)">
+            <v-list-item-content>
+              <!-- ここが数字 ちな、align=startは、文字列を左寄せしてねっていう意味。-->
+              <v-list-item-title align="center" v-text="question.question_no"></v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
+          <v-divider :key="`second-${key}`" ></v-divider>
+        </template>
+      </v-list>
+      <!-- ここで一覧終わり -->
+      <v-btn
+        color="#CE3772"
+        dark
+        depressed
+        rounded
+        @click="isCompleted = true"
+      > 
       採点する
     </v-btn>
+    </div>
 
 
     <!-- ここから答えを出してみよう！ -->
@@ -36,14 +38,14 @@
       <template>
         <thead>
           <tr>
-            <th class="text-center">No.</th>
-            <th class="text-center">あなたの答え</th>
-            <th class="text-center">正解</th>
-            <th class="text-center">判定</th>
+            <th class="text-center" id="no">No.</th>
+            <th class="text-center" id="your-ans">あなたの答え</th>
+            <th class="text-center" id="ans">正解</th>
+            <th class="text-center" id="res">判定</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="question in questions">
+          <tr v-for="(question, key) in questions" :key="key">
             <td class="text-left">{{ question.question_no }}</td>
             <td class="text-left">{{ usersChoice[question.question_no] }}</td>
             <td class="text-left">{{ question.answer }}</td>
@@ -93,7 +95,7 @@ import firestore from '@/firebase/firestore'
 import firebase from 'firebase'
 
 export default {
-  name: 'HelloWorld',
+  name: 'listQuestion',
   data() {
     return {
       questions: [],
@@ -117,20 +119,16 @@ export default {
       photoUrl:'',
       emailVerified:'',
       uid:'',
+
+      //システム系
+      isLoading:true,
     }
   },
   methods: {
-    signOut() {
-      firebase.auth().signOut().then(() => {
-        this.$router.push('/signin')
-      })
-    }
-    ,showquiz(question) {
+    showquiz(question) {
       this.radios = ''
       this.isQuiz = true;
       this.showing_question = question
-      console.log(this.showing_question.choices.a)
-      
     },
     answer(question, radio){
       this.isQuiz = false
@@ -148,11 +146,11 @@ export default {
         timestamp: firebase.firestore.FieldValue.serverTimestamp()
       };
       firestore.collection('users').doc(this.uid).collection('userAnswers').add(data)
-      
+      firestore.collection('users').doc(this.$route.query.uid).collection('reactions').add(data)
     }
-
   },
   created() {
+    this.isLoading=true
     const user = firebase.auth().currentUser;
     if (user != null) {
       this.name = user.displayName;
@@ -161,7 +159,7 @@ export default {
       this.emailVerified = user.emailVerified;
       this.uid = user.uid;
     }
-    const questions = firestore.collection('questions').orderBy('question_no');
+    const questions = firestore.collection('users').doc(this.$route.query.uid).collection('questions').orderBy('question_no');
     questions.get()
       .then((snapshot) => {
         snapshot.forEach((doc) => {
@@ -169,9 +167,11 @@ export default {
           data.doc_id = doc.id;
           this.questions.push(data)
         });
+        this.isLoading=false
       })
       .catch((err) => {
         console.log('Error getting documents', err);
+        this.isLoading=false
       });
   }
 }
