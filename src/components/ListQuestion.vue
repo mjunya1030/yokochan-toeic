@@ -128,7 +128,7 @@ export default {
 
   },
   created() {
-    const questions = firestore.collection('questions');
+    const questions = firestore.collection('questions').orderBy('question_no');
     questions.get()
       .then((snapshot) => {
         snapshot.forEach((doc) => {
