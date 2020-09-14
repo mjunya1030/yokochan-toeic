@@ -1,7 +1,7 @@
 import Vue from 'vue'
 import Router from 'vue-router'
 import ListQuestion from '@/components/ListQuestion'
-import ListUser from '@/components/ListUser'
+import ListTests from '@/components/ListTests'
 import AddQuestion from '@/components/AddQuestion'
 import MyPage from '@/components/MyPage'
 import Signin from '@/components/Signin'
@@ -18,8 +18,8 @@ let router = new Router({
     },
     {
       path: '/',
-      name: 'listUser',
-      component: ListUser,
+      name: 'listTests',
+      component: ListTests,
       meta: { requiresAuth: true }
     },
     {

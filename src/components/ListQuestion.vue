@@ -22,11 +22,11 @@
       </v-list>
       <!-- ここで一覧終わり -->
       <v-btn
-        color="#CE3772"
-        dark
+        color="primary"
         depressed
         rounded
-        @click="isCompleted = true"
+        :disabled="isFinished"
+        @click="finish"
       > 
       採点する
     </v-btn>
@@ -98,7 +98,6 @@ export default {
   name: 'listQuestion',
   data() {
     return {
-      questions: [],
       dialog: false,
       isQuiz: false,
       radios: '',
@@ -113,6 +112,12 @@ export default {
         }
       },
 
+      // テスト情報系
+      questions: [],
+      test_owner_id: [],
+      test_doc_id: [],
+      test_reaction_doc_id: "",
+
       // ユーザー情報系
       name:'',
       email:'',
@@ -122,6 +127,7 @@ export default {
 
       //システム系
       isLoading:true,
+      isFinished:false,
     }
   },
   methods: {
@@ -135,6 +141,7 @@ export default {
       this.usersChoice[question.question_no] = radio
 
       // firestoreにデータ書き込み
+      // TODO テスト経過時間を測って飛ばす。
       const data = {
         doc_id: question.doc_id,
         question_no: question.question_no,
@@ -143,14 +150,55 @@ export default {
         answer: question.answer,
         user_choice: radio,
         result: radio==question.answer,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+        spent_time: firebase.firestore.FieldValue.increment(15)
       };
+      // 自分の回答履歴を記録
       firestore.collection('users').doc(this.uid).collection('userAnswers').add(data)
-      firestore.collection('users').doc(this.$route.query.uid).collection('reactions').add(data)
+
+      // 試験答案を作成者に送信
+      // 更新できるなら更新する。
+      firestore.collection('users').doc(this.test_owner_id).collection('testReactions')
+        .doc(this.test_reaction_doc_id).collection('questionReactions')
+        .doc(question.doc_id).update(data)
+        .then((rst) => {
+        })
+        .catch((err) => {
+          // 更新できなければ新規作成する
+          firestore.collection('users').doc(this.test_owner_id).collection('testReactions')
+            .doc(this.test_reaction_doc_id).collection('questionReactions')
+            .doc(question.doc_id).set(data)
+        });
+    },
+    finish() {
+      this.isCompleted = true
+      let score = 0
+      // 得点を計算
+      this.questions.forEach(question => {
+        if(question.answer == this.usersChoice[question.question_no]){
+          score = score + 1 
+        }
+      })
+      // テスト終了を打刻
+      // TODO テストの経過時間を測って飛ばす。
+      const finishTestData = {
+        end_time: firebase.firestore.FieldValue.serverTimestamp(),
+        score: score,
+        spent_time: firebase.firestore.FieldValue.increment(300)
+      }
+      firestore.collection('users').doc(this.test_owner_id).collection('testReactions').doc(this.test_reaction_doc_id).set(finishTestData, { merge: true })
+        .then((rst) => {
+        })
+        .catch((err) => {
+          console.log('Error getting documents', err);
+        });
+      this.isFinished = true
     }
   },
   created() {
     this.isLoading=true
+
+    // ユーザー情報を取得
     const user = firebase.auth().currentUser;
     if (user != null) {
       this.name = user.displayName;
@@ -159,7 +207,11 @@ export default {
       this.emailVerified = user.emailVerified;
       this.uid = user.uid;
     }
-    const questions = firestore.collection('users').doc(this.$route.query.uid).collection('questions').orderBy('question_no');
+
+    // テストに関する情報を取得
+    this.test_owner_id = this.$route.query.test_path.split('/')[1]
+    this.test_doc_id = this.$route.query.test_path.split('/')[3]
+    const questions = firestore.doc(this.$route.query.test_path).collection('questions');
     questions.get()
       .then((snapshot) => {
         snapshot.forEach((doc) => {
@@ -172,6 +224,19 @@ export default {
       .catch((err) => {
         console.log('Error getting documents', err);
         this.isLoading=false
+      });
+    
+    // テスト開始を宣言
+    const initTestData = {
+      test_doc_id: this.test_doc_id,
+      start_time: firebase.firestore.FieldValue.serverTimestamp()
+    }
+    firestore.collection('users').doc(this.test_owner_id).collection('testReactions').add(initTestData)
+      .then((rst) => {
+        this.test_reaction_doc_id=rst.id
+      })
+      .catch((err) => {
+        console.log('Error getting documents', err);
       });
   }
 }
