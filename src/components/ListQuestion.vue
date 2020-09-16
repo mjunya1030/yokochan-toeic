@@ -32,29 +32,6 @@
     </v-btn>
     </div>
 
-
-    <!-- ここから答えを出してみよう！ -->
-    <v-simple-table v-show="isCompleted">
-      <template>
-        <thead>
-          <tr>
-            <th class="text-center" id="no">No.</th>
-            <th class="text-center" id="your-ans">あなたの答え</th>
-            <th class="text-center" id="ans">正解</th>
-            <th class="text-center" id="res">判定</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(question, key) in questions" :key="key">
-            <td class="text-left">{{ question.question_no }}</td>
-            <td class="text-left">{{ usersChoice[question.question_no] }}</td>
-            <td class="text-left">{{ question.answer }}</td>
-            <td><v-chip color="green" v-show="usersChoice[question.question_no] == question.answer">正解！</v-chip></td>
-          </tr>
-        </tbody>
-      </template>
-    </v-simple-table>
-
     <v-dialog
       v-model="isQuiz"
       max-width="290"
@@ -116,7 +93,7 @@ export default {
       questions: [],
       test_owner_id: [],
       test_doc_id: [],
-      test_reaction_doc_id: "",
+      test_reaction_path: "",
 
       // ユーザー情報系
       name:'',
@@ -151,32 +128,29 @@ export default {
         user_choice: radio,
         result: radio==question.answer,
         timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-        spent_time: firebase.firestore.FieldValue.increment(15)
+        spent_time: firebase.firestore.FieldValue.increment(15) // <--- 固定で15秒を入れてる。
       };
       // 自分の回答履歴を記録
       firestore.collection('users').doc(this.uid).collection('userAnswers').add(data)
 
       // 試験答案を作成者に送信
       // 更新できるなら更新する。
-      firestore.collection('users').doc(this.test_owner_id).collection('testReactions')
-        .doc(this.test_reaction_doc_id).collection('questionReactions')
+      firestore.doc(this.test_reaction_path).collection('questionReactions')
         .doc(question.doc_id).update(data)
         .then((rst) => {
         })
         .catch((err) => {
           // 更新できなければ新規作成する
-          firestore.collection('users').doc(this.test_owner_id).collection('testReactions')
-            .doc(this.test_reaction_doc_id).collection('questionReactions')
+          firestore.doc(this.test_reaction_path).collection('questionReactions')
             .doc(question.doc_id).set(data)
         });
     },
     finish() {
-      this.isCompleted = true
       let score = 0
       // 得点を計算
       this.questions.forEach(question => {
         if(question.answer == this.usersChoice[question.question_no]){
-          score = score + 1 
+          score = score + 1
         }
       })
       // テスト終了を打刻
@@ -186,8 +160,9 @@ export default {
         score: score,
         spent_time: firebase.firestore.FieldValue.increment(300)
       }
-      firestore.collection('users').doc(this.test_owner_id).collection('testReactions').doc(this.test_reaction_doc_id).set(finishTestData, { merge: true })
+      firestore.doc(this.test_reaction_path).set(finishTestData, { merge: true })
         .then((rst) => {
+          this.$router.push({name:'Result', query:{test_reaction_path: this.test_reaction_path}})
         })
         .catch((err) => {
           console.log('Error getting documents', err);
@@ -211,7 +186,7 @@ export default {
     // テストに関する情報を取得
     this.test_owner_id = this.$route.query.test_path.split('/')[1]
     this.test_doc_id = this.$route.query.test_path.split('/')[3]
-    const questions = firestore.doc(this.$route.query.test_path).collection('questions');
+    const questions = firestore.doc(this.$route.query.test_path).collection('questions').orderBy('question_no');
     questions.get()
       .then((snapshot) => {
         snapshot.forEach((doc) => {
@@ -233,7 +208,7 @@ export default {
     }
     firestore.collection('users').doc(this.test_owner_id).collection('testReactions').add(initTestData)
       .then((rst) => {
-        this.test_reaction_doc_id=rst.id
+        this.test_reaction_path=rst.path
       })
       .catch((err) => {
         console.log('Error getting documents', err);
