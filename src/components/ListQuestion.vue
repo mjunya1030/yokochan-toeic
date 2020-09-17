@@ -134,6 +134,7 @@ export default {
         user_choice: radio,
         result: radio==question.answer,
         timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+        answerer_id: this.uid,
         spent_time: firebase.firestore.FieldValue.increment(spenttimerounded) // <--- 固定で15秒を入れてる。
         
       };
@@ -195,9 +196,14 @@ export default {
       this.uid = user.uid;
     }
 
-    // テストに関する情報を取得
+
+
+    
+    // テスト問題に関する情報を取得
     this.test_owner_id = this.$route.query.test_path.split('/')[1]
     this.test_doc_id = this.$route.query.test_path.split('/')[3]
+
+    // テスト問題に関する情報を取得
     const questions = firestore.doc(this.$route.query.test_path).collection('questions').orderBy('question_no');
     questions.get()
       .then((snapshot) => {
@@ -216,11 +222,27 @@ export default {
     // テスト開始を宣言
     const initTestData = {
       test_doc_id: this.test_doc_id,
-      start_time: firebase.firestore.FieldValue.serverTimestamp()
+      test_doc_ref: this.$route.query.test_path,
+      start_time: firebase.firestore.FieldValue.serverTimestamp(),
+      answerer_id: this.uid
     }
     firestore.collection('users').doc(this.test_owner_id).collection('testReactions').add(initTestData)
       .then((rst) => {
         this.test_reaction_path=rst.path
+        // 答案にメタデータを追加
+        firestore.doc(this.$route.query.test_path).get()
+        .then((doc)=>{
+          firestore.doc(this.test_reaction_path).set({
+            test_reaction_path:this.test_reaction_path,
+            test_reaction_id:rst.id,
+            title:doc.data().title,
+            average_score:doc.data().average_score,
+            time_ave:doc.data().time_ave,
+            target_time:doc.data().target_time,
+            description:doc.data().description,
+            comment:doc.data().comment
+          }, { merge: true })
+        })
       })
       .catch((err) => {
         console.log('Error getting documents', err);

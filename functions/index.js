@@ -23,3 +23,11 @@ exports.copyUserDataToColletion = functions.auth.user().onCreate((user) => {
   }
   admin.firestore().collection('users').doc(uid).set(data);  
 });
+
+exports.copyUserTestResultsToColletion = functions.firestore
+  .document('users/{uid}/testReactions/{test_reaction_doc_id}')
+  .onWrite((change, context) => {
+    const data = change.after.data();
+    console.log(data)
+    admin.firestore().collection('users').doc(data.answerer_id).collection('userTestResults').doc(data.test_reaction_id).set(data);  
+  });
