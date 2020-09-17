@@ -29,5 +29,5 @@ exports.copyUserTestResultsToColletion = functions.firestore
   .onWrite((change, context) => {
     const data = change.after.data();
     console.log(data)
-    admin.firestore().collection('users').doc(data.answerer_id).collection('userTestResults').add(data);  
+    admin.firestore().collection('users').doc(data.answerer_id).collection('userTestResults').doc(data.test_reaction_id).set(data);  
   });
