@@ -183,7 +183,6 @@ export default {
   created() {
     this.timestart=Date.now()
     this.timelastanswered=Date.now()
-    console.log(this.timestart)
     this.isLoading=true
 
     // ユーザー情報を取得
