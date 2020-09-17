@@ -125,9 +125,6 @@ export default {
       const spenttime = Date.now()-this.timelastanswered
       this.timelastanswered = Date.now()
       const spenttimerounded = Math.round(spenttime/1000)
-      console.log(spenttime)
-      console.log(this.timestart)
-      console.log(Math.round(spenttime/1000))
       const data = {
         doc_id: question.doc_id,
         question_no: question.question_no,
