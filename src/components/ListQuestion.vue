@@ -105,6 +105,9 @@ export default {
       //システム系
       isLoading:true,
       isFinished:false,
+      timestart: "",
+      timelastanswered:"",
+
     }
   },
   methods: {
@@ -118,7 +121,13 @@ export default {
       this.usersChoice[question.question_no] = radio
 
       // firestoreにデータ書き込み
-      // TODO テスト経過時間を測って飛ばす。
+      // TODO テスト経過時間を測って飛ばす。      
+      const spenttime = Date.now()-this.timelastanswered
+      this.timelastanswered = Date.now()
+      const spenttimerounded = Math.round(spenttime/1000)
+      console.log(spenttime)
+      console.log(this.timestart)
+      console.log(Math.round(spenttime/1000))
       const data = {
         doc_id: question.doc_id,
         question_no: question.question_no,
@@ -128,7 +137,8 @@ export default {
         user_choice: radio,
         result: radio==question.answer,
         timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-        spent_time: firebase.firestore.FieldValue.increment(15) // <--- 固定で15秒を入れてる。
+        spent_time: firebase.firestore.FieldValue.increment(spenttimerounded) // <--- 固定で15秒を入れてる。
+        
       };
       // 自分の回答履歴を記録
       firestore.collection('users').doc(this.uid).collection('userAnswers').add(data)
@@ -146,6 +156,9 @@ export default {
         });
     },
     finish() {
+      this.timelastanswered= Date.now()
+      const finishedtime= this.timelastanswered-this.timestart
+      const finishedtimerounded = Math.round(finishedtime/1000)
       let score = 0
       // 得点を計算
       this.questions.forEach(question => {
@@ -158,7 +171,7 @@ export default {
       const finishTestData = {
         end_time: firebase.firestore.FieldValue.serverTimestamp(),
         score: score,
-        spent_time: firebase.firestore.FieldValue.increment(300)
+        spent_time: firebase.firestore.FieldValue.increment(finishedtimerounded)
       }
       firestore.doc(this.test_reaction_path).set(finishTestData, { merge: true })
         .then((rst) => {
@@ -171,6 +184,9 @@ export default {
     }
   },
   created() {
+    this.timestart=Date.now()
+    this.timelastanswered=Date.now()
+    console.log(this.timestart)
     this.isLoading=true
 
     // ユーザー情報を取得
