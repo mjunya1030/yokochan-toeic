@@ -128,7 +128,8 @@ export default {
         user_choice: radio,
         result: radio==question.answer,
         timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-        spent_time: firebase.firestore.FieldValue.increment(15) // <--- 固定で15秒を入れてる。
+        spent_time: firebase.firestore.FieldValue.increment(15), // <--- 固定で15秒を入れてる。
+        answerer_id: this.uid
       };
       // 自分の回答履歴を記録
       firestore.collection('users').doc(this.uid).collection('userAnswers').add(data)
@@ -204,7 +205,9 @@ export default {
     // テスト開始を宣言
     const initTestData = {
       test_doc_id: this.test_doc_id,
-      start_time: firebase.firestore.FieldValue.serverTimestamp()
+      test_doc_ref: this.$route.query.test_path,
+      start_time: firebase.firestore.FieldValue.serverTimestamp(),
+      answerer_id: this.uid
     }
     firestore.collection('users').doc(this.test_owner_id).collection('testReactions').add(initTestData)
       .then((rst) => {
