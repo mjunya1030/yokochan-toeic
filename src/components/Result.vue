@@ -37,9 +37,10 @@
           <tr v-for="(question, key) in questionsInfo" :key="key">
             <td class="text-left">{{ question.question_no }}</td>
             <td>
-              <v-chip color="accent" v-show="question.result&question.spent_time" small>正解！</v-chip>
-              <v-chip color="error" v-show="!question.result&question.spent_time" small>不正解…</v-chip>
+              <v-chip color="accent" v-show="question.result&&question.spent_time" small>正解！</v-chip>
+              <v-chip color="error" v-show="!question.result&&question.spent_time" small>不正解…</v-chip>
               <v-chip color="secondary" v-show="!question.spent_time" small>未回答</v-chip>
+              
             </td>
             <td v-show="question.spent_time">{{ question.spent_time }}秒</td><td v-show="!question.spent_time">-</td>
             <td>{{ question.target_time }}秒</td>
