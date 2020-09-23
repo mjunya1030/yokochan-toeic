@@ -10,11 +10,12 @@
         <template v-for="(question, key) in questions">
           <!-- 問題の数だけ、問題を表示するのを繰り返す keyは気にしなくてok。-->
           <v-list-item
-            :key="`first-${key}`"
+            :key="`first-${key}`" 
             @click="showquiz(question)">
             <v-list-item-content>
               <!-- ここが数字 ちな、align=startは、文字列を左寄せしてねっていう意味。-->
               <v-list-item-title align="center" v-text="question.question_no"></v-list-item-title>
+              <v-card flat outlined v-show="usersChoice[question.question_no]" class="pa-2 mt-3 " color="background">{{ usersChoice[question.question_no] }}</v-card>
             </v-list-item-content>
           </v-list-item>
           <v-divider :key="`second-${key}`" ></v-divider>
@@ -118,6 +119,16 @@ export default {
     },
     answer(question, radio){
       this.isQuiz = false
+      // 今、radioの中身はユーザが選んだ"A:needed"。
+      // で、quesiton_noは101。
+      // usersChoiceは {} (=中身からっぽ)
+
+      // usersChoice[question.question_no] とすると、 { "101": "(ここはまだ何かわかってない)"" } となる。
+      // usersChoice[question.question_no] = radio とすると、{ "101": "<< radioの中身 >>" } が入るので、
+      // usersChoiceは  {"101": "A:needed"} が完成！ 
+
+      // 101のユーザの答えが知りたければ、
+      // usersChoice[question.question_no]　とすれば、A:needed　が帰ってくるはず、、という事になる。
       this.usersChoice[question.question_no] = radio
 
       // firestoreにデータ書き込み
@@ -125,6 +136,7 @@ export default {
       const spenttime = Date.now()-this.timelastanswered
       this.timelastanswered = Date.now()
       const spenttimerounded = Math.round(spenttime/1000)
+
       const data = {
         doc_id: question.doc_id,
         question_no: question.question_no,
@@ -134,7 +146,6 @@ export default {
         user_choice: radio,
         result: radio==question.answer,
         timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-        answerer_id: this.uid,
         spent_time: firebase.firestore.FieldValue.increment(spenttimerounded) // <--- 固定で15秒を入れてる。
         
       };
@@ -184,6 +195,7 @@ export default {
   created() {
     this.timestart=Date.now()
     this.timelastanswered=Date.now()
+    console.log(this.timestart)
     this.isLoading=true
 
     // ユーザー情報を取得
@@ -196,14 +208,9 @@ export default {
       this.uid = user.uid;
     }
 
-
-
-    
-    // テスト問題に関する情報を取得
+    // テストに関する情報を取得
     this.test_owner_id = this.$route.query.test_path.split('/')[1]
     this.test_doc_id = this.$route.query.test_path.split('/')[3]
-
-    // テスト問題に関する情報を取得
     const questions = firestore.doc(this.$route.query.test_path).collection('questions').orderBy('question_no');
     questions.get()
       .then((snapshot) => {
@@ -222,27 +229,11 @@ export default {
     // テスト開始を宣言
     const initTestData = {
       test_doc_id: this.test_doc_id,
-      test_doc_ref: this.$route.query.test_path,
-      start_time: firebase.firestore.FieldValue.serverTimestamp(),
-      answerer_id: this.uid
+      start_time: firebase.firestore.FieldValue.serverTimestamp()
     }
     firestore.collection('users').doc(this.test_owner_id).collection('testReactions').add(initTestData)
       .then((rst) => {
         this.test_reaction_path=rst.path
-        // 答案にメタデータを追加
-        firestore.doc(this.$route.query.test_path).get()
-        .then((doc)=>{
-          firestore.doc(this.test_reaction_path).set({
-            test_reaction_path:this.test_reaction_path,
-            test_reaction_id:rst.id,
-            title:doc.data().title,
-            average_score:doc.data().average_score,
-            time_ave:doc.data().time_ave,
-            target_time:doc.data().target_time,
-            description:doc.data().description,
-            comment:doc.data().comment
-          }, { merge: true })
-        })
       })
       .catch((err) => {
         console.log('Error getting documents', err);
