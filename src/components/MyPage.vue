@@ -37,7 +37,7 @@
           <v-card-text class="text-left py-1">受けた日: {{ testResult.start_time.toDate().getFullYear() + "-" + (testResult.start_time.toDate().getMonth()+1) + "-" + testResult.start_time.toDate().getDate() }}
             {{ testResult.start_time.toDate().getHours() + "時" + testResult.start_time.toDate().getMinutes() + "分" + testResult.start_time.toDate().getSeconds() + "秒"}}</v-card-text>
           <v-card-text class="text-left py-1">平均点: {{ testResult.average_score }}点/5点</v-card-text>
-          <v-card-text class="text-left py-1">目標回答時間: {{ testResult.target_time }}点/5点</v-card-text>
+          <v-card-text class="text-left py-1">目標回答時間: {{ testResult.target_time }}秒</v-card-text>
           <v-divider></v-divider>
           <div v-show="testResult.score">
             <v-card-subtitle>あなたの結果</v-card-subtitle>
