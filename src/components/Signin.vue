@@ -25,7 +25,8 @@
       outlined
       @click="signInFacebook()"
       :loading="facebookloading"
-      :disabled="facebookloading">Facebookでログイン</v-btn>
+      :disabled="facebookloading"
+      rounded>Facebookでログイン</v-btn>
     <v-alert
       dense
       outlined

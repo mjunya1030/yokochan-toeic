@@ -12,6 +12,22 @@
       rounded
       :loading="loading"
       :disabled="loading">登録する</v-btn>
+    <p class="mt-7 mb-0" color="#3b5998">または…</p>
+    <v-btn
+      color="#3b5998"
+      flat
+      style="color:white;"
+      @click="signInFacebook()"
+      :loading="facebookloading"
+      :disabled="facebookloading"
+      rounded>Facebookでユーザ登録</v-btn>
+    <v-alert
+      dense
+      outlined
+      type="info"
+      class="mt-3"
+      v-show="facebookloading">リダイレクトしています...
+    </v-alert>
     <br/>
     <v-alert
       dense
@@ -37,7 +53,8 @@ export default {
       password: '',
       loading: false,
       error: false,
-      msgError: ''
+      msgError: '',
+      facebookloading: false,
     }
   },
   methods: {
@@ -59,7 +76,32 @@ export default {
           this.loading = false;
           this.error = true;
         })
+    },
+    signInFacebook() {
+      this.facebookloading = true
+      var provider = new firebase.auth.FacebookAuthProvider();
+      provider.setCustomParameters({
+        'display': 'popup'
+      });
+      firebase.auth().signInWithRedirect(provider).then();
+      this.facebookloading = false
     }
+  },
+  created() {
+    // if
+    this.facebookloading = true
+    firebase.auth().getRedirectResult().then(
+      result => {
+        this.facebookloading = true
+        if (result.credential) {
+          this.$router.push('/')
+        }
+        this.facebookloading = false
+      },
+      err => {
+        console.log(error)
+      }
+    );
   }
 }
 </script>
