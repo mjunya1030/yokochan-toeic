@@ -27,10 +27,15 @@
             <router-link to="/mypage">マイページ</router-link>
           </v-list-item-content>
         </v-list-item>
+        <v-list-item>
+          <v-list-item-content @click="signOut()">
+            <router-link to="">ログアウト</router-link>
+          </v-list-item-content>
+        </v-list-item>
       </v-list>
     </v-navigation-drawer>
 
-    <!-- メインどこ -->
+    <!-- メイン -->
     <v-main>
       <v-container fluid>
         <router-view/>
@@ -40,11 +45,20 @@
 </template>
 
 <script>
+import firebase from 'firebase'
+
 export default {
   name: 'App',
   data: () =>({
     drawer: false,
-  })
+  }),
+  methods: {
+    signOut() {
+      firebase.auth().signOut().then(() => {
+        this.$router.push('/signin')
+      })
+    }
+  }
 }
 </script>
 
