@@ -1,12 +1,13 @@
 <template>
   <div class="signup">
     <h2>ユーザ登録</h2>
-    <input type="text" placeholder="Username" v-model="username">
+    <input type="text" placeholder="Email address" v-model="emailAddress">
     <input type="password" placeholder="Password" v-model="password">
+    <input type="password" placeholder="Password確認">
     <v-btn
       @click="signUp"
-      color="#CE3772"
-      style="color:white;"
+      color="accent"
+      class="mt-4"
       depressed
       rounded
       :loading="loading"
@@ -18,9 +19,9 @@
       type="error"
       v-show="error"
     >{{ msgError }}</v-alert>
-    <p>すでにアカウントをお持ちですか？
-      <router-link to="/signin">ログインはこちら</router-link>
-    </p>
+    <p>すでにアカウントをお持ちですか？</p>
+    <router-link to="/signin" color="accent">ログインはこちら</router-link>
+    
     
   </div>
 </template>
@@ -32,7 +33,7 @@ export default {
   name: 'Signup',
   data () {
     return {
-      username: '',
+      emailAddress: '',
       password: '',
       loading: false,
       error: false,
@@ -42,7 +43,7 @@ export default {
   methods: {
     signUp: function () {
       this.loading = true;
-      firebase.auth().createUserWithEmailAndPassword(this.username, this.password)
+      firebase.auth().createUserWithEmailAndPassword(this.emailAddress, this.password)
         .then(user => {
           firebase.auth().currentUser.sendEmailVerification({
             url: 'https://yokochan-86e14.web.app/',
