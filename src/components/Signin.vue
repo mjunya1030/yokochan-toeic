@@ -1,10 +1,11 @@
 <template>
   <div class="signin">
     <h2>ログイン</h2>
-    <input type="text" placeholder="Username" v-model="username">
+    <input type="text" placeholder="Email address" v-model="emailAddress">
     <input type="password" placeholder="Password" v-model="password">
     <v-btn
       @click="signIn"
+      class="mt-4"
       color="#CE3772"
       style="color:white;"
       depressed 
@@ -19,9 +20,8 @@
       v-show="this.error">{{ msgError }}
     </v-alert>
     <br/>
-    <p>まだアカウントをお持ちでない方
-      <router-link to="/signup">新規登録</router-link>
-    </p>
+    <p>まだアカウントをお持ちでない方</p>
+    <router-link to="/signup">新規登録</router-link>
   </div>
 </template>
 
@@ -32,7 +32,7 @@ export default {
   name: 'Signin',
   data: function () {
     return {
-      username: '',
+      emailAddress: '',
       password: '',
       loading: false,
       error: false,
@@ -42,7 +42,7 @@ export default {
   methods: {
     async signIn() {
       this.loading = true
-      firebase.auth().signInWithEmailAndPassword(this.username, this.password).then(
+      firebase.auth().signInWithEmailAndPassword(this.emailAddress, this.password).then(
         user => {     
           this.loading = false     
           this.$router.push('/')
