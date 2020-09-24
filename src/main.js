@@ -4,8 +4,15 @@ import Vue from 'vue'
 import App from './App'
 import router from './router'
 import vuetify from '@/plugins/vuetify'
+import VueAnalytics from 'vue-analytics';
+
 
 Vue.config.productionTip = false
+
+// Configuration VueAnalytics
+Vue.use(VueAnalytics, {
+  id: 'UA-177378076-1'
+});
 
 /* eslint-disable no-new */
 new Vue({

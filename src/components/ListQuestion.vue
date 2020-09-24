@@ -116,6 +116,7 @@ export default {
       this.radios = ''
       this.isQuiz = true;
       this.showing_question = question
+      this.$ga.event('listQuestion', 'showQuiz', question.question_no, 1)
     },
     answer(question, radio){
       this.isQuiz = false
@@ -147,7 +148,6 @@ export default {
         result: radio==question.answer,
         timestamp: firebase.firestore.FieldValue.serverTimestamp(),
         spent_time: firebase.firestore.FieldValue.increment(spenttimerounded) // <--- 固定で15秒を入れてる。
-        
       };
       // 自分の回答履歴を記録
       firestore.collection('users').doc(this.uid).collection('userAnswers').add(data)
@@ -163,6 +163,7 @@ export default {
           firestore.doc(this.test_reaction_path).collection('questionReactions')
             .doc(question.doc_id).set(data)
         });
+      this.$ga.event('listQuestion', 'answer', spenttimerounded, 1)
     },
     finish() {
       this.timelastanswered= Date.now()
@@ -190,12 +191,12 @@ export default {
           console.log('Error getting documents', err);
         });
       this.isFinished = true
+      this.$ga.event('listQuestion', 'finish', finishedtimerounded, 1)
     }
   },
   created() {
     this.timestart=Date.now()
     this.timelastanswered=Date.now()
-    console.log(this.timestart)
     this.isLoading=true
 
     // ユーザー情報を取得
@@ -238,6 +239,7 @@ export default {
       .catch((err) => {
         console.log('Error getting documents', err);
       });
+    this.$ga.page('/listQuestion');
   }
 }
 </script>

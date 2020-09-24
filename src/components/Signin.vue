@@ -96,6 +96,7 @@ export default {
         console.log(error)
       }
     );
+    this.$ga.page('/signin');
   }
 }
 </script>

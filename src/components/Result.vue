@@ -134,6 +134,7 @@ export default {
     this.test_owner_id = this.$route.query.test_reaction_path.split('/')[1]
     // const testResult = firestore.doc(this.$route.query.test_reaction_path)
     this.getTestDataAsync();
+    this.$ga.page('/result');
   }
 }
 </script>
