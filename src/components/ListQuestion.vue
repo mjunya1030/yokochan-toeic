@@ -116,6 +116,7 @@ export default {
       this.radios = ''
       this.isQuiz = true;
       this.showing_question = question
+      this.$ga.event('listQuestion', 'showQuiz', question.question_no, 1)
     },
     answer(question, radio){
       this.isQuiz = false
@@ -146,8 +147,8 @@ export default {
         user_choice: radio,
         result: radio==question.answer,
         timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+        answerer_id: this.uid,
         spent_time: firebase.firestore.FieldValue.increment(spenttimerounded) // <--- 固定で15秒を入れてる。
-        
       };
       // 自分の回答履歴を記録
       firestore.collection('users').doc(this.uid).collection('userAnswers').add(data)
@@ -163,6 +164,7 @@ export default {
           firestore.doc(this.test_reaction_path).collection('questionReactions')
             .doc(question.doc_id).set(data)
         });
+      this.$ga.event('listQuestion', 'answer', spenttimerounded, 1)
     },
     finish() {
       this.timelastanswered= Date.now()
@@ -190,12 +192,12 @@ export default {
           console.log('Error getting documents', err);
         });
       this.isFinished = true
+      this.$ga.event('listQuestion', 'finish', finishedtimerounded, 1)
     }
   },
   created() {
     this.timestart=Date.now()
     this.timelastanswered=Date.now()
-    console.log(this.timestart)
     this.isLoading=true
 
     // ユーザー情報を取得
@@ -229,15 +231,32 @@ export default {
     // テスト開始を宣言
     const initTestData = {
       test_doc_id: this.test_doc_id,
-      start_time: firebase.firestore.FieldValue.serverTimestamp()
+      test_doc_ref: this.$route.query.test_path,
+      start_time: firebase.firestore.FieldValue.serverTimestamp(),
+      answerer_id: this.uid
     }
     firestore.collection('users').doc(this.test_owner_id).collection('testReactions').add(initTestData)
       .then((rst) => {
         this.test_reaction_path=rst.path
+        // 答案にメタデータを追加
+        firestore.doc(this.$route.query.test_path).get()
+        .then((doc)=>{
+          firestore.doc(this.test_reaction_path).set({
+            test_reaction_path:this.test_reaction_path,
+            test_reaction_id:rst.id,
+            title:doc.data().title,
+            average_score:doc.data().average_score,
+            time_ave:doc.data().time_ave,
+            target_time:doc.data().target_time,
+            description:doc.data().description,
+            comment:doc.data().comment
+          }, { merge: true })
+        })
       })
       .catch((err) => {
         console.log('Error getting documents', err);
       });
+    this.$ga.page('/listQuestion');
   }
 }
 </script>

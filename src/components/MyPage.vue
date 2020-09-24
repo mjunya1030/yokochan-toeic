@@ -43,18 +43,18 @@
             <v-card-subtitle>あなたの結果</v-card-subtitle>
             <v-card-text class="text-left py-1">得点: {{ testResult.score }}点/5点</v-card-text>
             <v-card-text class="text-left py-1">かかった時間: {{ testResult.spent_time }}秒</v-card-text>
-            <v-card-actions class="justify-end"><v-btn text color=accent @click="$router.push({name:'Result', query: { test_reaction_path: testResult.test_reaction_path }})">結果を詳しく見る</v-btn></v-card-actions>
+            <v-card-actions class="justify-end"><v-btn text color=accent @click="showResult(testResult.test_reaction_path)">結果を詳しく見る</v-btn></v-card-actions>
           </div>
           <div v-show="!testResult.score">
             <v-card-text class="text-left">このテストは完了しませんでした</v-card-text>
-            <v-card-actions class="justify-end"><v-btn text color=primary @click="$router.push({name:'ListQuestion', query:{test_path: testResult.test_doc_ref}})">もう一度受ける</v-btn></v-card-actions>
+            <v-card-actions class="justify-end"><v-btn text color=primary @click="tryAgain(testResult.test_doc_ref)">もう一度受ける</v-btn></v-card-actions>
           </div>
         </v-card>
       </v-row>
       <!-- <router-link to="/mypage">もっと見る</router-link> -->
     </div>
     <div v-show="userTestResults.length==0">
-      <p>答案履歴がありません…。どんどん問題を解いて、苦手を無くしましょう！</p>
+      <p>どんどん問題を解いて、苦手を無くしましょう！</p>
     </div>
   </div>
 </template>
@@ -79,6 +79,14 @@ export default {
     }
   },
   methods: {
+    showResult(test_reaction_path){
+      this.$ga.event('MyPage', 'showResult', test_reaction_path, 1)
+      this.$router.push({name:'Result', query: { test_reaction_path: test_reaction_path }})
+    },
+    tryAgain(test_doc_ref){
+      this.$ga.event('MyPage', 'tryAgain', test_doc_ref, 1)
+      this.$router.push({name:'ListQuestion', query:{test_path: test_doc_ref}})
+    }
   },
   created() {
     const user = firebase.auth().currentUser;
@@ -121,6 +129,8 @@ export default {
       .catch((err) => {
         console.log('Error getting documents', err);
       });
+    
+    this.$ga.page('/mypage');
   }
 }
 </script>
