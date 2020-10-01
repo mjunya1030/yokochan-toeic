@@ -3,66 +3,130 @@
     <div v-show="questions.length==0&&isLoading==false">この人が作った問題はまだないようです…。</div>
     <div v-if="questions.length!=0">
       <p class="text-center">問題に挑戦してみよう！</p>
+
+
       <!-- ここから一覧 -->
-      <v-list two-line>
-        <!-- v-for とかくと、questionsの数だけ、繰り返してくれる。 -->
-        
-        <template v-for="(question, key) in questions">
-          <!-- 問題の数だけ、問題を表示するのを繰り返す keyは気にしなくてok。-->
-          <v-list-item
-            :key="`first-${key}`" 
-            @click="showquiz(question)">
-            <v-list-item-content>
-              <!-- ここが数字 ちな、align=startは、文字列を左寄せしてねっていう意味。-->
-              <v-list-item-title align="center" v-text="question.question_no"></v-list-item-title>
-              <v-card flat outlined v-show="usersChoice[question.question_no]" class="pa-2 mt-3 " color="background">{{ usersChoice[question.question_no] }}</v-card>
-            </v-list-item-content>
-          </v-list-item>
-          <v-divider :key="`second-${key}`" ></v-divider>
-        </template>
-      </v-list>
+      <v-stepper v-model="e1">
+        <v-stepper-items  v-for="(question, key) in questions" :key="`second-${key}`">
+          <v-stepper-content :step="question.question_no">
+            <v-card
+              outlined
+              flat
+              height="200px"
+            >
+              <v-card-title>{{ question.question_no }}</v-card-title>
+              <v-card-text>{{ question.question_text }}</v-card-text>
+            </v-card>
+            <v-radio-group v-model="radios" :mandatory="false" class="ma-3">
+              <v-radio :label="question.choices.a" :value="question.choices.a"></v-radio>
+              <v-radio :label="question.choices.b" :value="question.choices.b"></v-radio>
+              <v-radio :label="question.choices.c" :value="question.choices.c"></v-radio>
+              <v-radio :label="question.choices.d" :value="question.choices.d"></v-radio>
+            </v-radio-group>
+            
+            <!-- 回答ボタン -->
+            <v-row class="py-5" no-gutters>
+              <v-btn
+                color="primary"
+                @click="answer(question, radios)"
+                deprresed
+                block
+              >
+                回答する
+              </v-btn>
+            </v-row>
+            <v-divider></v-divider>
+
+            <!-- 正解を表示 -->
+            <v-row class="py-5" no-gutters v-show="isAnswered"
+              justify="space-between">
+              {{question.answer}}
+               <v-btn
+                color="secondary"
+                @click="openComments"
+                deprresed
+                fab
+                align-self="end"
+                outlined
+                small
+              >
+               <v-icon>mdi-chat-processing-outline</v-icon>
+              </v-btn>
+            </v-row>
+
+            <v-divider></v-divider>
+
+            <!-- 前の問題と次の問題 -->
+            <v-row class="py-5" no-gutters justify="space-between">
+              <v-btn
+                color="primary"
+                @click="goBack"
+                v-show="e1>101"
+                text
+              >
+                前の問題
+              </v-btn>
+              
+              <v-btn
+                color="primary"
+                @click="goOn"
+                class="align-self-end"
+                deprresed
+              >
+                次の問題
+              </v-btn>
+            </v-row>
+
+
+
+
+            
+          </v-stepper-content>
+          
+        </v-stepper-items>
+        <v-stepper-content step = "106">
+            <v-card
+              class="mb-12"
+              color="grey lighten-1"
+              height="200px"
+            ></v-card>
+            <v-btn
+              color="primary"
+              @click="e1 = e1 - 1"
+              deprresed
+            >
+              戻る
+            </v-btn>
+            <v-btn
+              color="primary"
+              @click="finish"
+              deprresed
+            >
+              採点する
+            </v-btn>
+          </v-stepper-content>
+      </v-stepper>
+
+      
       <!-- ここで一覧終わり -->
-      <v-btn
-        color="primary"
-        depressed
-        rounded
-        :disabled="isFinished"
-        @click="finish"
-      > 
-      採点する
-    </v-btn>
     </div>
 
     <v-dialog
-      v-model="isQuiz"
+      v-model="showComments"
       max-width="290"
     >
-      <v-card>
-        <v-card-title class="headline" align="start">{{showing_question.question_no}}</v-card-title>
-        <v-card-text class="text-left">{{showing_question.question_text}}</v-card-text>
-        <v-radio-group v-model="radios" :mandatory="false" class="ma-3">
-          <v-radio :label="showing_question.choices.a" :value="showing_question.choices.a"></v-radio>
-          <v-radio :label="showing_question.choices.b" :value="showing_question.choices.b"></v-radio>
-          <v-radio :label="showing_question.choices.c" :value="showing_question.choices.c"></v-radio>
-          <v-radio :label="showing_question.choices.d" :value="showing_question.choices.d"></v-radio>
-        </v-radio-group>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn
-            color="green darken-1"
-            text
-            @click="isQuiz = false"
-          >
-            やめる
-          </v-btn>
-          <v-btn
-            color="green darken-1"
-            text
-            @click="answer(showing_question, radios)"
-          >
-            回答する
-          </v-btn>
-        </v-card-actions>
+      <v-card class="pa-5">
+        <v-card v-for="(testComment, key) in testComments" :key="key" class="my-2" flat outlined>
+          <v-card-text class="text-left">{{testComment.userName}}</v-card-text>
+          <v-card-text class="text-left">{{testComment.content}}</v-card-text>
+        </v-card>
+        <v-text-field outlined label=""></v-text-field>
+        <v-btn
+          @click=""
+          color="secondary"
+          depressed 
+          rounded>コメントする
+        </v-btn>
       </v-card>
     </v-dialog>
   </div>
@@ -95,6 +159,7 @@ export default {
       test_owner_id: [],
       test_doc_id: [],
       test_reaction_path: "",
+      testComments: [],
 
       // ユーザー情報系
       name:'',
@@ -106,8 +171,11 @@ export default {
       //システム系
       isLoading:true,
       isFinished:false,
+      isAnswered:false,
       timestart: "",
       timelastanswered:"",
+      e1: 101, //v-stepper
+      showComments:false,
 
     }
   },
@@ -118,8 +186,8 @@ export default {
       this.showing_question = question
       this.$ga.event('listQuestion', 'showQuiz', question.question_no, 1)
     },
-    answer(question, radio){
-      this.isQuiz = false
+    answer(question, radio){     
+      //this.isQuiz = false
       // 今、radioの中身はユーザが選んだ"A:needed"。
       // で、quesiton_noは101。
       // usersChoiceは {} (=中身からっぽ)
@@ -165,6 +233,7 @@ export default {
             .doc(question.doc_id).set(data)
         });
       this.$ga.event('listQuestion', 'answer', spenttimerounded, 1)
+      this.isAnswered=true
     },
     finish() {
       this.timelastanswered= Date.now()
@@ -193,6 +262,36 @@ export default {
         });
       this.isFinished = true
       this.$ga.event('listQuestion', 'finish', finishedtimerounded, 1)
+    },
+    goOn() {
+      this.e1 = this.e1 + 1
+      this.isAnswered = false
+    },
+    goBack() {
+      this.e1 = this.e1 - 1
+      this.isAnswered = false
+    },
+    openComments(){
+      this.testComments = []
+      const questions = firestore.doc(this.$route.query.test_path).collection('questions').doc('yoko-question-1').collection('comments');
+      questions.get()
+        .then((snapshot) => {
+          snapshot.forEach((doc) => {
+
+            // this.testComent=doc.data()
+            this.testComments.push(doc.data())         
+            // 一個めの中身何？
+            //var data = doc.data()
+            //data.doc_id = doc.id;
+            //this.questions.push(data)
+          });
+          this.isLoading=false
+        })
+        .catch((err) => {
+          console.log('Error getting documents', err);
+          this.isLoading=false
+        });   
+      this.showComments=true
     }
   },
   created() {
