@@ -40,10 +40,33 @@
             <!-- 正解を表示 -->
             <v-row class="py-5" no-gutters v-show="isAnswered"
               justify="space-between">
-              {{question.answer}}
-               <v-btn
+              <v-col cols=12>
+                <v-chip flat color="light-green" v-show="question.answer==usersChoice[question.question_no]" >正解！</v-chip>
+                <v-chip flat color="light-gray" v-show="question.answer!==usersChoice[question.question_no]" >不正解</v-chip>
+              </v-col>
+              <v-col cols=12>
+                <v-simple-table>
+                  <template>
+                    <tbody>
+                      <tr class="text-left" >
+                        <td>答え:</td>
+                        <td>{{question.answer}}</td>
+                      </tr>
+                      <tr class="text-left" >
+                        <td>正答率:</td>
+                        <td>{{ question.rate_collect_answer * 100}}%</td>
+                      </tr>
+                      <tr class="text-left" >
+                        <td>平均回答時間:</td>
+                        <td>{{question.ave_time}}秒</td>
+                      </tr>
+                    </tbody>
+                  </template>
+                </v-simple-table>
+              </v-col>
+              <v-btn
                 color="secondary"
-                @click="openComments"
+                @click="openComments(question.doc_id)"
                 deprresed
                 fab
                 align-self="end"
@@ -87,9 +110,12 @@
         <v-stepper-content step = "106">
             <v-card
               class="mb-12"
-              color="grey lighten-1"
               height="200px"
-            ></v-card>
+              flat
+
+            >
+            お疲れ様でした！次のページでテスト結果を振り返りましょう。
+            </v-card>
             <v-btn
               color="primary"
               @click="e1 = e1 - 1"
@@ -102,7 +128,7 @@
               @click="finish"
               deprresed
             >
-              採点する
+              結果をみる
             </v-btn>
           </v-stepper-content>
       </v-stepper>
@@ -120,9 +146,9 @@
           <v-card-text class="text-left">{{testComment.userName}}</v-card-text>
           <v-card-text class="text-left">{{testComment.content}}</v-card-text>
         </v-card>
-        <v-text-field outlined label=""></v-text-field>
+        <v-text-field outlined v-model="userComment"></v-text-field>
         <v-btn
-          @click=""
+          @click="addComment()"
           color="secondary"
           depressed 
           rounded>コメントする
@@ -160,6 +186,7 @@ export default {
       test_doc_id: [],
       test_reaction_path: "",
       testComments: [],
+      currentQuestionId: {},
 
       // ユーザー情報系
       name:'',
@@ -176,6 +203,8 @@ export default {
       timelastanswered:"",
       e1: 101, //v-stepper
       showComments:false,
+
+      userComment:"",
 
     }
   },
@@ -233,6 +262,8 @@ export default {
             .doc(question.doc_id).set(data)
         });
       this.$ga.event('listQuestion', 'answer', spenttimerounded, 1)
+
+      // 回答した後に正解を表示
       this.isAnswered=true
     },
     finish() {
@@ -271,9 +302,9 @@ export default {
       this.e1 = this.e1 - 1
       this.isAnswered = false
     },
-    openComments(){
+    fetchComments(questionId) {
       this.testComments = []
-      const questions = firestore.doc(this.$route.query.test_path).collection('questions').doc('yoko-question-1').collection('comments');
+      const questions = firestore.doc(this.$route.query.test_path).collection('questions').doc(questionId).collection('comments').orderBy('time');
       questions.get()
         .then((snapshot) => {
           snapshot.forEach((doc) => {
@@ -290,9 +321,25 @@ export default {
         .catch((err) => {
           console.log('Error getting documents', err);
           this.isLoading=false
-        });   
+        });
+    },
+    openComments(questionId){
+      this.currentQuestionId = questionId
+      this.fetchComments(questionId)
       this.showComments=true
+    },
+    addComment() {
+      const commentContent = {
+        uid: this.uid,
+        content:this.userComment,
+        userName:this.name,
+        time:firebase.firestore.FieldValue.serverTimestamp(),
+      }
+      firestore.doc(this.$route.query.test_path).collection('questions').doc(this.currentQuestionId).collection('comments').add(commentContent);
+      console.log(this.userComment)
+      this.fetchComments(this.currentQuestionId)
     }
+    
   },
   created() {
     this.timestart=Date.now()
@@ -302,12 +349,14 @@ export default {
     // ユーザー情報を取得
     const user = firebase.auth().currentUser;
     if (user != null) {
-      this.name = user.displayName;
       this.email = user.email;
-      this.photoUrl = user.photoURL;
-      this.emailVerified = user.emailVerified;
       this.uid = user.uid;
     }
+
+    firestore.collection('users').doc(this.uid).get()
+      .then((doc) => {
+        this.name = doc.data().displayName
+      })
 
     // テストに関する情報を取得
     this.test_owner_id = this.$route.query.test_path.split('/')[1]
